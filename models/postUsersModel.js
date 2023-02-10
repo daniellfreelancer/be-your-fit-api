@@ -13,7 +13,7 @@ const PostUserSchema = new mongoose.Schema({
 
 PostUserSchema.methods.setImgUrl = function setImgUrl (filename) {
 
-  this.imgUrl = `${process.env.LOCALHOST}/public/${filename}`
+  this.imgUrl = `${process.env.HOST}/public/${filename}`
 }
 
 const POSTSBYUSERS  = mongoose.model('postUser', PostUserSchema)

@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.methods.setImgUrl = function setImgUrl (filename) {
 
-    this.imgUrl = `${process.env.LOCALHOST}/public/${filename}`
+    this.imgUrl = `${process.env.HOST}/public/${filename}`
   }
 
 const USERAPP = mongoose.model(
