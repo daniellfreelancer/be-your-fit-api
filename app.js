@@ -7,16 +7,20 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
+const bodyParser = require('body-parser')
 
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
 var app = express();
 
-var subs = require('./routes/subsRoutes');
-var contact = require('./routes/contactRoutes');
-var admin = require('./routes/adminRoutes')
+
+//my Routes
+const subs = require('./routes/subsRoutes');
+const contact = require('./routes/contactRoutes');
+const usersApp = require('./routes/usersAppRoutes')
+const postUsersRouter = require('./routes/postUsersRoutes')
+const recipes = require('./routes/recipesRoutes')
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -24,10 +28,19 @@ app.set('view engine', 'ejs');
 app.use(cors())
 
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+
+// app.use(express.urlencoded({ extended: false }));
+// app.use(express.json());
+// app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use('/public', express.static(`${__dirname}/storage/assets`))
+
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -35,7 +48,9 @@ app.use('/users', usersRouter);
 //myRoutes
 app.use('/newsletter', subs);
 app.use('/form', contact);
-app.use('/admin', admin);
+app.use('/usersapp', usersApp);
+app.use('/wall', postUsersRouter);
+app.use('/recipes', recipes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

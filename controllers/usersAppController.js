@@ -1,4 +1,4 @@
-const AdminUsers = require('../models/adminModel');
+const UsersApp = require('../models/usersAppModel');
 const Joi = require('joi')
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -41,22 +41,31 @@ const adminController = {
             email,
             password,
             from,
-            role
+            role,
+            imgUrl,
         } = req.body;
-
+        let weight = 0;
+        let size = 0;
+        let friends = []
+        let recipes = []
         try {
-            await adminUserCreateValidator.validateAsync(req.body)
-            let adminUser = await AdminUsers.findOne({ email })
+            // await adminUserCreateValidator.validateAsync(req.body)
+            let adminUser = await UsersApp.findOne({ email })
             password = bcryptjs.hashSync(password, 10)
             logged = false;
             if(!adminUser){
-                adminUser = await new AdminUsers({
+                adminUser = await new UsersApp({
                     name,
                     email,
                     password,
                     from,
                     role,
-                    logged
+                    logged,
+                    imgUrl,
+                    weight,
+                    size,
+                    friends,
+                    recipes
                 }).save()
                 res.status(201).json({
                     message: "usuario registrado",
@@ -94,7 +103,7 @@ const adminController = {
         try {
             await adminUserLoginValidator.validateAsync(req.body);
 
-            let adminUser = await AdminUsers.findOne({ email })
+            let adminUser = await UsersApp.findOne({ email })
 
             const token = jwt.sign(
                 {
@@ -183,7 +192,7 @@ const adminController = {
         let { email } = req.body;
         try {
 
-            const adminUser = await AdminUsers.findOne({ email })
+            const adminUser = await UsersApp.findOne({ email })
 
             if (adminUser) {
 
