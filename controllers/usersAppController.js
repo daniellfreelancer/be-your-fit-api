@@ -73,7 +73,7 @@ const adminController = {
                     res.status(201).json({
                         message: "usuario registrado",
                         success: true,
-                        response: adminUser
+                        res: adminUser
                     })
                 } else {
                     if (adminUser.from.includes(from)) {
