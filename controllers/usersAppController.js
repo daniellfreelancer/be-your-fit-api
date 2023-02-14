@@ -49,44 +49,56 @@ const adminController = {
         let friends = []
         let recipes = []
         try {
-            // await adminUserCreateValidator.validateAsync(req.body)
-            let adminUser = await UsersApp.findOne({ email })
-            password = bcryptjs.hashSync(password, 10)
-            logged = false;
-            if(!adminUser){
-                adminUser = await new UsersApp({
-                    name,
-                    email,
-                    password,
-                    from,
-                    role,
-                    logged,
-                    imgUrl,
-                    weight,
-                    size,
-                    friends,
-                    recipes
-                }).save()
-                res.status(201).json({
-                    message: "usuario registrado",
-                    success: true
-                })
-            } else {
-                if (adminUser.from.includes(from)) {
-                    res.status(200).json({
-                        message: "El usuario ya existe " + from,
-                        success: false
+
+            let userName = await UsersApp.findOne({name})
+
+            if (!userName) {
+                let adminUser = await UsersApp.findOne({ email })
+                password = bcryptjs.hashSync(password, 10)
+                logged = false;
+                if(!adminUser){
+                    adminUser = await new UsersApp({
+                        name,
+                        email,
+                        password,
+                        from,
+                        role,
+                        logged,
+                        imgUrl,
+                        weight,
+                        size,
+                        friends,
+                        recipes
+                    }).save()
+                    res.status(201).json({
+                        message: "usuario registrado",
+                        success: true,
+                        response: adminUser
                     })
                 } else {
-                    adminUser.from.push(from)
-                    adminUser.password.push(bcryptjs.hashSync(password, 10))
-                    await user.save()
-                    res.status(201).json({
-                        message: "El usuario se registró desde" + from,
-                        success: true
-                    })
+                    if (adminUser.from.includes(from)) {
+                        res.status(200).json({
+                            message: "El usuario ya existe " + from,
+                            success: false
+                        })
+                    } else {
+                        adminUser.from.push(from)
+                        adminUser.password.push(bcryptjs.hashSync(password, 10))
+                        await user.save()
+                        res.status(201).json({
+                            message: "El usuario se registró desde" + from,
+                            success: true
+                        })
+                    }
                 }
+            } else {
+                res.status(400).json({
+                    message: "El nombre de usuario ya existe",
+                    success: false
+                })
             }
+            // await adminUserCreateValidator.validateAsync(req.body)
+           
 
         } catch (error) {
             console.log(error)
