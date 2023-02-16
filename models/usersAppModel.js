@@ -9,9 +9,7 @@ const userSchema = new mongoose.Schema({
     logged: {type: String, required: true},
     weight: {type: Number, required: true},
     size:{type: Number, required: true},
-    imgUrl: {type: String, required: true},
-    friends:{type: Array, required: true},
-    recipes:{type: Array, required: true}
+    imgUrl: {type: String, required: true}
 
 })
 

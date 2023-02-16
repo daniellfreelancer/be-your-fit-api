@@ -4,39 +4,10 @@ const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 
-const adminUserCreateValidator = Joi.object({
-    "name":Joi.string().messages({
-        'string.empty': 'Por favor, escriba su nombre'
-    }).required(),
-    "email": Joi.string().email().messages({
-        'string.empty': 'Escriba su correo electrónico',
-        'string.email': 'Debe introducir una dirección de correo electrónico válida'
-    })
-        .required(),
-    "password": Joi.string().alphanum().min(6).messages({
-        'string.empty': 'Escriba una contraseña',
-        'string.alphanum': 'Debe introducir una contraseña que contenga números o letras',
-        'string.min': 'Su contraseña debe tener al menos 6 caracteres'
-    }).required(),
-    "from": Joi.string().required(),
-    "role": Joi.string(),
-})
-
-
-const adminUserLoginValidator = Joi.object({
-    "email": Joi.string()
-        .email()
-        .required(),
-    "password": Joi.string()
-        .required(),
-    "from": Joi.string().required()
-})
-
-
 const adminController = {
 
     signUp: async (req, res) => {
-        let {   
+        let {
             name,
             email,
             password,
@@ -44,101 +15,71 @@ const adminController = {
             role,
             imgUrl,
         } = req.body;
+
         let weight = 0;
         let size = 0;
-        let friends = []
-        let recipes = []
+
+
         try {
 
-            let userName = await UsersApp.findOne({name})
+            let userFit = await UsersApp.findOne({ email })
 
-            if (!userName) {
 
-                let userFit = await UsersApp.findOne({ email })
-                logged = false;
+            if (!userFit) {
+                let logged = false;
                 password = bcryptjs.hashSync(password, 10)
 
-                if (from === 'app'){
-                    userFit = await new UsersApp({
-                        name,
-                        email,
-                        password: [password],
-                        role,
-                        from: [from],
-                        logged,
-                        imgUrl,
-                        weight,
-                        size,
-                        friends,
-                        recipes
-                    }).save()
+                if (from === 'form') {
+                    userFit = await new UsersApp(
+                        {
+                            name,
+                            email,
+                            password: [password],
+                            role,
+                            from: [from],
+                            logged,
+                            imgUrl,
+                            weight,
+                            size
+                        }).save()
                     res.status(201).json({
                         message: "user signed up",
                         success: true
                     })
                 } else {
-                    userFit = await new UsersApp({
-                        name,
-                        email,
-                        password: [password],
-                        role,
-                        from: [from],
-                        logged,
-                        imgUrl,
-                        weight,
-                        size,
-                        friends,
-                        recipes
-                    }).save()
+                    userFit = await new UsersApp(
+                        {
+                            name,
+                            email,
+                            password: [password],
+                            role,
+                            from: [from],
+                            logged,
+                            imgUrl,
+                            weight,
+                            size
+                        }).save()
                     res.status(201).json({
-                        message: `user signed up ${from}`,
+                        message: "user signed up " + from,
                         success: true
                     })
                 }
-                
-                // if(!userFit){
-                    userFit = await new UsersApp({
-                        name,
-                        email,
-                        password,
-                        from,
-                        role,
-                        logged,
-                        imgUrl,
-                        weight,
-                        size,
-                        friends,
-                        recipes
-                    }).save()
-                    res.status(201).json({
-                        message: "usuario registrado",
-                        success: true,
-                        res: userFit
+            } else {
+                if (userFit.from.includes(from)) {
+                    res.status(200).json({
+                        message: "user already exist " + from,
+                        success: false
                     })
                 } else {
-                    if (userFit.from.includes(from)) {
-                        res.status(200).json({
-                            message: "Ya tienes creada una cuenta desde " + from,
-                            success: false
-                        })
-                    } else {
-                        userFit.from.push(from)
-                        userFit.password.push(bcryptjs.hashSync(password, 10))
-                        await user.save()
-                        res.status(201).json({
-                            message: `Agregaste ${from} a tu cuenta`,
-                            success: true
-                        })
-                    }
+                    userFit.from.push(from)
+                    userFit.password.push(bcryptjs.hashSync(password, 10))
+                    await userFit.save()
+                    res.status(201).json({
+                        message: "user signed up from " + from,
+                        success: true
+                    })
                 }
-            // } else {
-            //     res.status(400).json({
-            //         message: "El nombre de usuario ya existe",
-            //         success: false
-            //     })
-            // }
-            // await adminUserCreateValidator.validateAsync(req.body)
-           
+            }
 
         } catch (error) {
             console.log(error)
@@ -147,96 +88,105 @@ const adminController = {
                 success: false
             })
         }
-    
+
     },
     signIn: async (req, res) => {
         let { email, password, from } = req.body;
 
         try {
-            await adminUserLoginValidator.validateAsync(req.body);
 
-            let adminUser = await UsersApp.findOne({ email })
+            const user = await UsersApp.findOne({ email })
 
             const token = jwt.sign(
                 {
-                    id: adminUser._id,
-                    role: adminUser.role
+                    id: user._id,
+                    role: user.role
                 },
                 process.env.KEY_JWT,
-                { expiresIn: 60 * 60 * 24 })
+                { 
+                    expiresIn: 60 * 60 * 24 
+                }
+                )
 
-            if(!adminUser) {
+            if (!user) {
                 res.status(404).json({
-                    message: 'El usuario no existe, por favor regístrese',
+                    message: 'User does not exist, please Sign Up!',
                     success: false
                 })
-            } else {
-                const adminUserPass = adminUser.password.filter(adminpass => bcryptjs.compareSync(password, adminpass))
-                if (from === "form"){
-                    if (adminUserPass.length > 0) {
-                        const adminlogin = {
-                            _id: adminUser._id,
-                            name: adminUser.name,
-                            from: adminUser.from,
-                            email: adminUser.email,
-                            role: adminUser.role,
-                            logged: adminUser.logged,
-                            imgUrl: adminUser.imgUrl,
-                            weight: adminUser.weight,
-                            size: adminUser.size,
-                            friends: adminUser.friends,
-                        }
-                        adminUser.logged = true
-                        await adminUser.save();
+            } else if (user) {
 
-                        
+                const userPass = user.password.filter(userpassword => bcryptjs.compareSync(password, userpassword))
+
+                if (from === "form") {
+                    if (userPass.length > 0) {
+                        const loginUser = {
+                            id: user._id,
+                            email: user.email,
+                            name: user.name,
+                            from: user.from,
+                            imgUrl: user.imgUrl,
+                            role: user.role,
+                            weight: user.weight,
+                            size: user.size
+                        }
+                        user.logged = true
+                        await user.save()
+
                         res.status(200).json({
-                            message: 'Inicio de sesión exitoso',
+                            message: 'Login Success',
                             success: true,
                             response: {
-                                user: adminlogin,
-                                token
-                            }
-                        })
-                    } else {
-
-                        res.status(400).json({
-                            message: 'Fallo en el inicio de sesión, por favor, compruebe su correo electrónico y contraseña',
-                            success: false
-                        })
-                    }
-                } else {
-                    if (adminUserPass.length > 0) {
-                        const adminlogin = {
-                            _id: adminUser._id,
-                            name: adminUser.name,
-                            from: adminUser.from,
-                            email: adminUser.email,
-                            role: adminUser.role
-                        }
-                        adminUser.logged = true
-                        await adminUser.save();
-
-                        
-                        res.status(200).json({
-                            message: 'Iniciar sesión con éxito desde Google',
-                            success: true,
-                            response: {
-                                user: adminlogin,
+                                user: loginUser,
                                 token: token
                             }
                         })
                     } else {
-
+                        
                         res.status(400).json({
-                            message: 'Fallo en el inicio de sesión, por favor, compruebe su correo electrónico y contraseña',
+                            message: 'Login Failed, please check your email and password',
+                            success: false
+                        })
+                    }
+                }
+                else {
+                    if (userPass.length > 0) {
+
+                        user.logged = true
+                        
+                        const loginUser = {
+                            id: user._id,
+                            email: user.email,
+                            name: user.name,
+                            from: user.from,
+                            imgUrl: user.imgUrl,
+                            role: user.role,
+                            weight: user.weight,
+                            size: user.size
+                        }
+
+                        await user.save()
+                        res.status(200).json({
+                            message: 'Login Success from Google',
+                            success: true,
+                            response: {
+                                user: loginUser,
+                                token: token
+                                }
+                        })
+                    } else {
+                        res.status(404).json({
+                            message: 'Login Failed, please check your password',
                             success: false
                         })
                     }
                 }
             }
-
-
+            else {
+                res.status(401).json({
+                    message: 'Login Failed, please verify your email',
+                    success: false
+                })
+            }
         } catch (error) {
             console.log(error);
             res.status(400).json({
@@ -262,13 +212,13 @@ const adminController = {
                     response: adminUser.logged
                 })
 
-            }else {
+            } else {
                 res.status(400).json({
                     message: 'No podés cerrar sesión, ya que no estas loguead@',
                     success: false
                 })
             }
-            
+
         } catch (error) {
             console.log(error);
             res.status(400).json({
@@ -277,7 +227,7 @@ const adminController = {
             })
         }
     }
-    
+
 
 
 
