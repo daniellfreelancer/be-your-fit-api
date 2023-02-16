@@ -53,11 +53,51 @@ const adminController = {
             let userName = await UsersApp.findOne({name})
 
             if (!userName) {
-                let adminUser = await UsersApp.findOne({ email })
-                password = bcryptjs.hashSync(password, 10)
+
+                let userFit = await UsersApp.findOne({ email })
                 logged = false;
-                if(!adminUser){
-                    adminUser = await new UsersApp({
+                password = bcryptjs.hashSync(password, 10)
+
+                if (from === 'app'){
+                    userFit = await new UsersApp({
+                        name,
+                        email,
+                        password: [password],
+                        role,
+                        from: [from],
+                        logged,
+                        imgUrl,
+                        weight,
+                        size,
+                        friends,
+                        recipes
+                    }).save()
+                    res.status(201).json({
+                        message: "user signed up",
+                        success: true
+                    })
+                } else {
+                    userFit = await new UsersApp({
+                        name,
+                        email,
+                        password: [password],
+                        role,
+                        from: [from],
+                        logged,
+                        imgUrl,
+                        weight,
+                        size,
+                        friends,
+                        recipes
+                    }).save()
+                    res.status(201).json({
+                        message: `user signed up ${from}`,
+                        success: true
+                    })
+                }
+                
+                // if(!userFit){
+                    userFit = await new UsersApp({
                         name,
                         email,
                         password,
@@ -73,30 +113,30 @@ const adminController = {
                     res.status(201).json({
                         message: "usuario registrado",
                         success: true,
-                        res: adminUser
+                        res: userFit
                     })
                 } else {
-                    if (adminUser.from.includes(from)) {
+                    if (userFit.from.includes(from)) {
                         res.status(200).json({
-                            message: "El usuario ya existe " + from,
+                            message: "Ya tienes creada una cuenta desde " + from,
                             success: false
                         })
                     } else {
-                        adminUser.from.push(from)
-                        adminUser.password.push(bcryptjs.hashSync(password, 10))
+                        userFit.from.push(from)
+                        userFit.password.push(bcryptjs.hashSync(password, 10))
                         await user.save()
                         res.status(201).json({
-                            message: "El usuario se registró desde" + from,
+                            message: `Agregaste ${from} a tu cuenta`,
                             success: true
                         })
                     }
                 }
-            } else {
-                res.status(400).json({
-                    message: "El nombre de usuario ya existe",
-                    success: false
-                })
-            }
+            // } else {
+            //     res.status(400).json({
+            //         message: "El nombre de usuario ya existe",
+            //         success: false
+            //     })
+            // }
             // await adminUserCreateValidator.validateAsync(req.body)
            
 
@@ -139,7 +179,12 @@ const adminController = {
                             name: adminUser.name,
                             from: adminUser.from,
                             email: adminUser.email,
-                            role: adminUser.role
+                            role: adminUser.role,
+                            logged: adminUser.logged,
+                            imgUrl: adminUser.imgUrl,
+                            weight: adminUser.weight,
+                            size: adminUser.size,
+                            friends: adminUser.friends,
                         }
                         adminUser.logged = true
                         await adminUser.save();
