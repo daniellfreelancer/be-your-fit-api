@@ -226,7 +226,51 @@ const adminController = {
                 success: false
             })
         }
+    },
+    editProfile: async (req, res) => {
+        let { id } = req.params
+        let {imgUrl} = req.body;
+        
+        
+        try {
+            let userForUpdate = await UsersApp.findOne({_id: id})
+            if (userForUpdate){
+                if (!req.file){
+                    
+                    return res.status(404).json({
+                        message: 'no file',
+                        success: false,
+                      })
+                } else {
+                    let updatePhoto = await UsersApp.findByIdAndUpdate(id, req.body)
+                    let {filename } = req.file;
+                    updatePhoto.setImgUrl(filename)
+                    updatePhoto.save()
+                      res.status(200).json({
+                        response:updatePhoto,
+                        message:'file exist',
+                        success: true
+                    })
+                }
+
+            } else {
+                res.status(400).json({
+                    message: 'Missing Data Error, please review your update request',
+                    success: false
+                })
+            }
+        } catch (error) {
+            console.log(error)
+            res.status(400).json({
+                message: error.message,
+                succes: false
+            })
+        }
+
+
     }
+
+
 
 
 
